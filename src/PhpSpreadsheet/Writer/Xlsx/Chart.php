@@ -326,13 +326,13 @@ class Chart extends WriterPart
         }
 
         if (($chartType !== DataSeries::TYPE_PIECHART) && ($chartType !== DataSeries::TYPE_PIECHART_3D) && ($chartType !== DataSeries::TYPE_DONUTCHART)) {
-            if ($chartType === DataSeries::TYPE_BUBBLECHART) {
-                $this->writeValueAxis($objWriter, $xAxisLabel, $chartType, $id1, $id2, $catIsMultiLevelSeries, $xAxis, $majorGridlines, $minorGridlines);
+            if ($chartType === DataSeries::TYPE_BUBBLECHART || $chartType === DataSeries::TYPE_SCATTERCHART) {
+                $this->writeValueAxis($objWriter, $xAxisLabel, $chartType, $id2, $id1, $catIsMultiLevelSeries, $xAxis, $majorGridlines, $minorGridlines, 'b');
             } else {
                 $this->writeCategoryAxis($objWriter, $xAxisLabel, $id1, $id2, $catIsMultiLevelSeries, $yAxis);
             }
 
-            $this->writeValueAxis($objWriter, $yAxisLabel, $chartType, $id1, $id2, $valIsMultiLevelSeries, $xAxis, $majorGridlines, $minorGridlines);
+            $this->writeValueAxis($objWriter, $yAxisLabel, $chartType, $id1, $id2, $valIsMultiLevelSeries, $xAxis, $majorGridlines, $minorGridlines, 'l');
         }
 
         $objWriter->endElement();
@@ -518,10 +518,11 @@ class Chart extends WriterPart
      * @param Axis $xAxis
      * @param GridLines $majorGridlines
      * @param GridLines $minorGridlines
+     * @param string $position 
      *
      * @throws WriterException
      */
-    private function writeValueAxis($objWriter, $yAxisLabel, $groupType, $id1, $id2, $isMultiLevelSeries, Axis $xAxis, GridLines $majorGridlines, GridLines $minorGridlines)
+    private function writeValueAxis($objWriter, $yAxisLabel, $groupType, $id1, $id2, $isMultiLevelSeries, Axis $xAxis, GridLines $majorGridlines, GridLines $minorGridlines, string $position)
     {
         $objWriter->startElement('c:valAx');
 
@@ -556,7 +557,7 @@ class Chart extends WriterPart
         $objWriter->endElement();
 
         $objWriter->startElement('c:axPos');
-        $objWriter->writeAttribute('val', 'l');
+        $objWriter->writeAttribute('val', $position);
         $objWriter->endElement();
 
         $objWriter->startElement('c:majorGridlines');
@@ -1106,6 +1107,18 @@ class Chart extends WriterPart
 
         foreach ($plotSeriesOrder as $plotSeriesIdx => $plotSeriesRef) {
             $objWriter->startElement('c:ser');
+
+            if (($groupType == DataSeries::TYPE_SCATTERCHART) ||
+                ($groupType == DataSeries::TYPE_BUBBLECHART)
+            ) {
+                //    Line Fill
+                $objWriter->startElement('c:spPr');
+                $objWriter->startElement('a:ln');
+                $objWriter->writeElement('a:noFill');
+                $objWriter->endElement();
+                $objWriter->endElement();
+            }
+
 
             $plotLabel = $plotGroup->getPlotLabelByIndex($plotSeriesIdx);
             if ($plotLabel) {
